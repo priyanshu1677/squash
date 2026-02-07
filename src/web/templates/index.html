@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/marked/marked.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow">
+            <div class="max-w-7xl mx-auto py-6 px-4">
+                <h1 class="text-3xl font-bold text-gray-900">{{ app_name }}</h1>
+                <p class="text-gray-600 mt-1">Data-driven product decisions with AI agents</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 px-4">
+            <!-- Upload Section -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">📄 Upload Customer Interviews</h2>
+                <div class="flex items-center space-x-4">
+                    <input type="file" id="fileInput" accept=".pdf,.docx,.doc"
+                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
+                                  file:rounded-full file:border-0 file:text-sm file:font-semibold
+                                  file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    <button onclick="uploadFile()"
+                            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Upload
+                    </button>
+                </div>
+                <div id="uploadStatus" class="mt-2"></div>
+                <div id="filesList" class="mt-4"></div>
+            </div>
+
+            <!-- Query Section -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">💬 Ask a Question</h2>
+                <textarea id="queryInput"
+                          class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500"
+                          rows="3"
+                          placeholder="What should we build next?"></textarea>
+                <div class="mt-4 flex items-center justify-between">
+                    <div class="text-sm text-gray-600">
+                        <p>Try asking:</p>
+                        <ul class="list-disc list-inside mt-1">
+                            <li class="cursor-pointer text-blue-600 hover:underline" onclick="setQuery('What should we build next?')">What should we build next?</li>
+                            <li class="cursor-pointer text-blue-600 hover:underline" onclick="setQuery('What are the top customer pain points?')">What are the top customer pain points?</li>
+                            <li class="cursor-pointer text-blue-600 hover:underline" onclick="setQuery('Analyze customer feedback trends')">Analyze customer feedback trends</li>
+                        </ul>
+                    </div>
+                    <button onclick="runQuery()"
+                            class="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold">
+                        Run Analysis
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="hidden bg-blue-50 border-l-4 border-blue-600 p-4 mb-6">
+                <div class="flex items-center">
+                    <svg class="animate-spin h-5 w-5 text-blue-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-blue-800 font-medium">Analyzing data... This may take a minute.</span>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results" class="hidden">
+                <!-- Top Feature -->
+                <div id="topFeature" class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg shadow p-6 mb-6"></div>
+
+                <!-- Tabs -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="border-b border-gray-200">
+                        <nav class="flex -mb-px">
+                            <button onclick="showTab('spec')" id="tab-spec"
+                                    class="tab-button border-b-2 border-blue-600 py-4 px-6 font-semibold text-blue-600">
+                                Feature Spec
+                            </button>
+                            <button onclick="showTab('ui')" id="tab-ui"
+                                    class="tab-button border-b-2 border-transparent py-4 px-6 font-semibold text-gray-600 hover:text-gray-800">
+                                UI Proposals
+                            </button>
+                            <button onclick="showTab('tasks')" id="tab-tasks"
+                                    class="tab-button border-b-2 border-transparent py-4 px-6 font-semibold text-gray-600 hover:text-gray-800">
+                                Development Tasks
+                            </button>
+                            <button onclick="showTab('opportunities')" id="tab-opportunities"
+                                    class="tab-button border-b-2 border-transparent py-4 px-6 font-semibold text-gray-600 hover:text-gray-800">
+                                All Opportunities
+                            </button>
+                        </nav>
+                    </div>
+                    <div class="p-6">
+                        <div id="content-spec" class="tab-content prose max-w-none"></div>
+                        <div id="content-ui" class="tab-content hidden prose max-w-none"></div>
+                        <div id="content-tasks" class="tab-content hidden prose max-w-none"></div>
+                        <div id="content-opportunities" class="tab-content hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Load files on page load
+        loadFiles();
+
+        function setQuery(query) {
+            document.getElementById('queryInput').value = query;
+        }
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const status = document.getElementById('uploadStatus');
+            status.innerHTML = '<p class="text-blue-600">Uploading...</p>';
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    status.innerHTML = '<p class="text-green-600">✓ Uploaded successfully!</p>';
+                    fileInput.value = '';
+                    loadFiles();
+                } else {
+                    status.innerHTML = `<p class="text-red-600">Error: ${data.error}</p>`;
+                }
+            } catch (error) {
+                status.innerHTML = `<p class="text-red-600">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function loadFiles() {
+            try {
+                const response = await fetch('/api/files');
+                const data = await response.json();
+
+                const filesList = document.getElementById('filesList');
+                if (data.files.length > 0) {
+                    filesList.innerHTML = '<h3 class="font-semibold text-gray-700 mb-2">Uploaded Files:</h3>' +
+                        '<ul class="list-disc list-inside text-sm text-gray-600">' +
+                        data.files.map(f => `<li>${f.name} (${(f.size / 1024).toFixed(1)} KB)</li>`).join('') +
+                        '</ul>';
+                } else {
+                    filesList.innerHTML = '<p class="text-sm text-gray-500">No files uploaded yet</p>';
+                }
+            } catch (error) {
+                console.error('Error loading files:', error);
+            }
+        }
+
+        async function runQuery() {
+            const query = document.getElementById('queryInput').value.trim();
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+
+            try {
+                const formData = new FormData();
+                formData.append('query', query);
+
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                displayResults(data);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                document.getElementById('loadingIndicator').classList.add('hidden');
+            }
+        }
+
+        function displayResults(data) {
+            // Top feature
+            if (data.top_feature) {
+                const tf = data.top_feature;
+                document.getElementById('topFeature').innerHTML = `
+                    <h2 class="text-2xl font-bold text-green-800 mb-2">🎯 ${tf.name}</h2>
+                    <p class="text-gray-700 mb-4">${tf.description}</p>
+                    <div class="flex space-x-6 text-sm">
+                        <div><span class="font-semibold">Confidence:</span> ${tf.confidence}</div>
+                        <div><span class="font-semibold">RICE Score:</span> ${tf.rice_score || 'N/A'}</div>
+                    </div>
+                `;
+            }
+
+            // Feature spec
+            if (data.feature_spec_markdown) {
+                document.getElementById('content-spec').innerHTML = marked.parse(data.feature_spec_markdown);
+            }
+
+            // UI proposals
+            if (data.ui_proposals_markdown) {
+                document.getElementById('content-ui').innerHTML = marked.parse(data.ui_proposals_markdown);
+            }
+
+            // Tasks
+            if (data.task_breakdown_markdown) {
+                document.getElementById('content-tasks').innerHTML = marked.parse(data.task_breakdown_markdown);
+            }
+
+            // Opportunities
+            if (data.all_opportunities) {
+                const oppsHtml = data.all_opportunities.map((opp, i) => `
+                    <div class="border-b border-gray-200 py-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-semibold text-gray-800">${i + 1}. ${opp.name}</h4>
+                                <p class="text-sm text-gray-600 mt-1">${opp.description}</p>
+                            </div>
+                            <div class="text-right ml-4">
+                                <div class="text-sm font-semibold text-blue-600">${opp.rice_score || 'N/A'}</div>
+                                <div class="text-xs text-gray-500">${opp.confidence}</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('content-opportunities').innerHTML = oppsHtml;
+            }
+
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        function showTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('border-blue-600', 'text-blue-600');
+                btn.classList.add('border-transparent', 'text-gray-600');
+            });
+            document.getElementById(`tab-${tabName}`).classList.add('border-blue-600', 'text-blue-600');
+            document.getElementById(`tab-${tabName}`).classList.remove('border-transparent', 'text-gray-600');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

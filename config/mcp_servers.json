@@ -1,0 +1,88 @@
+{
+  "servers": {
+    "mixpanel": {
+      "type": "analytics",
+      "name": "Mixpanel",
+      "description": "Product analytics and user behavior tracking",
+      "mock": true,
+      "capabilities": [
+        "query_events",
+        "get_user_metrics",
+        "get_funnel_data",
+        "get_retention_data"
+      ]
+    },
+    "posthog": {
+      "type": "analytics",
+      "name": "PostHog",
+      "description": "Product analytics and feature flags",
+      "mock": true,
+      "capabilities": [
+        "query_events",
+        "get_feature_flags",
+        "get_session_recordings",
+        "get_user_cohorts"
+      ]
+    },
+    "zendesk": {
+      "type": "support",
+      "name": "Zendesk",
+      "description": "Customer support ticket management",
+      "mock": true,
+      "capabilities": [
+        "get_tickets",
+        "search_tickets",
+        "get_ticket_metrics",
+        "get_customer_satisfaction"
+      ]
+    },
+    "intercom": {
+      "type": "support",
+      "name": "Intercom",
+      "description": "Customer messaging and support",
+      "mock": true,
+      "capabilities": [
+        "get_conversations",
+        "get_user_messages",
+        "get_customer_sentiment",
+        "get_common_topics"
+      ]
+    },
+    "salesforce": {
+      "type": "sales",
+      "name": "Salesforce",
+      "description": "CRM and sales management",
+      "mock": true,
+      "capabilities": [
+        "get_opportunities",
+        "get_accounts",
+        "get_win_loss_reasons",
+        "get_customer_feedback"
+      ]
+    },
+    "jira": {
+      "type": "project_management",
+      "name": "Jira",
+      "description": "Project and issue tracking",
+      "mock": true,
+      "capabilities": [
+        "get_issues",
+        "get_sprint_data",
+        "get_backlog",
+        "get_velocity"
+      ]
+    },
+    "confluence": {
+      "type": "project_management",
+      "name": "Confluence",
+      "description": "Documentation and knowledge management",
+      "mock": true,
+      "capabilities": [
+        "search_pages",
+        "get_product_docs",
+        "get_requirements",
+        "get_user_stories"
+      ]
+    }
+  }
+}
