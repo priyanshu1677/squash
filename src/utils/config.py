@@ -74,7 +74,7 @@ class Config:
         self.log_level = get_env("LOG_LEVEL", "INFO")
 
         # API Keys
-        self.anthropic_api_key = get_env("ANTHROPIC_API_KEY", required=True)
+        self.openai_api_key = get_env("OPENAI_API_KEY", required=True)
 
         # Web settings
         self.web_host = get_env("WEB_HOST", "0.0.0.0")
@@ -86,6 +86,32 @@ class Config:
 
         # MCP settings
         self.use_mock_mcp = get_env("USE_MOCK_MCP", "true").lower() == "true"
+
+        # Mixpanel
+        self.mixpanel_project_id = get_env("MIXPANEL_PROJECT_ID", "")
+        self.mixpanel_api_secret = get_env("MIXPANEL_API_SECRET", "")
+        self.mixpanel_eu = get_env("MIXPANEL_EU", "false").lower() == "true"
+
+        # PostHog
+        self.posthog_api_key = get_env("POSTHOG_API_KEY", "")
+        self.posthog_project_id = get_env("POSTHOG_PROJECT_ID", "")
+        self.posthog_host = get_env("POSTHOG_HOST", "https://app.posthog.com")
+
+        # Jira
+        self.jira_domain = get_env("JIRA_DOMAIN", "")  # yourcompany.atlassian.net
+        self.jira_email = get_env("JIRA_EMAIL", "")
+        self.jira_api_token = get_env("JIRA_API_TOKEN", "")
+        self.jira_project_key = get_env("JIRA_PROJECT_KEY", "")
+
+        # Confluence (often same Atlassian credentials as Jira)
+        self.confluence_domain = get_env("CONFLUENCE_DOMAIN", "")
+        self.confluence_email = get_env("CONFLUENCE_EMAIL", "")
+        self.confluence_api_token = get_env("CONFLUENCE_API_TOKEN", "")
+        self.confluence_space_key = get_env("CONFLUENCE_SPACE_KEY", "")
+
+        # Salesforce
+        self.salesforce_instance_url = get_env("SALESFORCE_INSTANCE_URL", "")
+        self.salesforce_access_token = get_env("SALESFORCE_ACCESS_TOKEN", "")
 
         # Create directories if they don't exist
         self.upload_dir.mkdir(parents=True, exist_ok=True)

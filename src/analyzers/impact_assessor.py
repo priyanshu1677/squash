@@ -3,8 +3,8 @@
 import json
 from typing import Dict, Any
 
-from langchain_anthropic import ChatAnthropic
-from langchain.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 
 from ..utils.config import config
 from ..utils.logger import get_logger
@@ -16,14 +16,13 @@ class ImpactAssessor:
     """
     Assess the potential impact of features on users and business.
 
-    Uses Claude to predict outcomes and identify risks.
+    Uses LLM to predict outcomes and identify risks.
     """
 
     def __init__(self):
-        self.llm = ChatAnthropic(
-            model="claude-3-5-sonnet-20241022",
-            api_key=config.anthropic_api_key,
-            temperature=0.5,
+        self.llm = ChatOpenAI(
+            model="o3-mini",
+            api_key=config.openai_api_key,
         )
 
     def assess_impact(
@@ -44,37 +43,36 @@ class ImpactAssessor:
         logger.info(f"Assessing impact for feature: {feature.get('name')}")
 
         prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are an expert product strategist assessing feature impact.
+            ("system", """You are a product strategist assessing the potential impact of a proposed feature for Squash, a PM AI platform.
 
-Analyze the proposed feature and provide:
-1. User impact (how it affects users)
-2. Business impact (metrics, revenue, retention)
-3. Technical considerations (complexity, dependencies)
-4. Risks (what could go wrong)
-5. Success metrics (how to measure success)
+Given the feature details and supporting context (analytics, support data), produce a structured impact assessment. Think through:
+- Who exactly benefits and how much?
+- What business metrics will move and by how much?
+- What's the engineering cost vs. the payoff?
+- What could go wrong?
 
-Format as JSON:
-{
-  "user_impact": {
-    "description": "How users benefit",
+Return ONLY valid JSON (no markdown fences, no commentary):
+{{
+  "user_impact": {{
+    "description": "How users benefit from this feature",
     "affected_user_segments": ["segment1", "segment2"],
     "adoption_prediction": "high/medium/low"
-  },
-  "business_impact": {
-    "description": "Business outcomes",
-    "potential_metrics": {
+  }},
+  "business_impact": {{
+    "description": "Expected business outcomes",
+    "potential_metrics": {{
       "retention": "+X%",
       "engagement": "+Y%"
-    }
-  },
-  "technical_considerations": {
+    }}
+  }},
+  "technical_considerations": {{
     "complexity": "high/medium/low",
     "estimated_effort": "X weeks",
     "dependencies": ["dep1", "dep2"]
-  },
+  }},
   "risks": ["risk1", "risk2"],
-  "success_metrics": ["metric1", "metric2"]
-}"""),
+  "success_metrics": ["metric1 with target", "metric2 with target"]
+}}"""),
             ("user", "Feature:\n{feature}\n\nContext:\n{context}")
         ])
 

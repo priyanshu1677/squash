@@ -3,8 +3,8 @@
 import json
 from typing import Dict, Any, List
 
-from langchain_anthropic import ChatAnthropic
-from langchain.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 
 from ..utils.config import config
 from ..utils.logger import get_logger
@@ -21,10 +21,9 @@ class UIProposalGenerator:
     """
 
     def __init__(self):
-        self.llm = ChatAnthropic(
-            model="claude-3-5-sonnet-20241022",
-            api_key=config.anthropic_api_key,
-            temperature=0.7,
+        self.llm = ChatOpenAI(
+            model="o3-mini",
+            api_key=config.openai_api_key,
         )
 
     def generate_proposals(
@@ -43,46 +42,43 @@ class UIProposalGenerator:
         logger.info("Generating UI proposals")
 
         prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are a UX designer creating UI proposals for a feature.
+            ("system", """You are a product designer creating UI and workflow proposals based on a feature spec.
 
-Based on the feature spec, propose:
-1. UI changes (new screens, components, modifications)
-2. User flow (step-by-step how users interact)
-3. Data model changes (new fields, relationships)
-4. Design considerations (accessibility, responsiveness, etc.)
+For each UI change, describe the screen layout, key components, and interactions in enough detail that a frontend developer could implement it. Think through the full user journey from entry point to completion.
 
-Format as JSON:
-{
+Return ONLY valid JSON (no markdown fences, no commentary):
+{{
   "ui_changes": [
-    {
+    {{
       "screen": "Screen name",
       "change_type": "new/modify/remove",
-      "description": "What changes",
+      "description": "What changes and why",
       "components": ["component1", "component2"],
-      "mockup_description": "Detailed description of UI"
-    }
+      "mockup_description": "Detailed layout description: what the user sees, where elements are positioned, key interactions"
+    }}
   ],
   "user_flow": [
-    {
+    {{
       "step": 1,
       "screen": "Screen name",
-      "action": "What user does",
-      "outcome": "What happens"
-    }
+      "action": "What the user does",
+      "outcome": "What happens as a result"
+    }}
   ],
   "data_model_changes": [
-    {
+    {{
       "entity": "Entity name",
       "change_type": "new_field/new_table/modify",
       "description": "What changes",
-      "fields": ["field1", "field2"]
-    }
+      "fields": ["field1: type - purpose", "field2: type - purpose"]
+    }}
   ],
   "design_considerations": [
-    "Consideration 1",
-    "Consideration 2"
+    "Accessibility consideration",
+    "Responsive design consideration",
+    "Edge case or error state"
   ]
-}"""),
+}}"""),
             ("user", "Feature Spec:\n{spec}")
         ])
 

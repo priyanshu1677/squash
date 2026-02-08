@@ -3,8 +3,8 @@
 import json
 from typing import Dict, Any
 
-from langchain_anthropic import ChatAnthropic
-from langchain.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 
 from ..utils.config import config
 from ..utils.logger import get_logger
@@ -21,10 +21,9 @@ class FeatureSpecGenerator:
     """
 
     def __init__(self):
-        self.llm = ChatAnthropic(
-            model="claude-3-5-sonnet-20241022",
-            api_key=config.anthropic_api_key,
-            temperature=0.6,
+        self.llm = ChatOpenAI(
+            model="o3-mini",
+            api_key=config.openai_api_key,
         )
 
     def generate_spec(
@@ -45,39 +44,35 @@ class FeatureSpecGenerator:
         logger.info(f"Generating spec for: {feature.get('name')}")
 
         prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are a senior product manager writing a feature specification.
+            ("system", """You are a senior product manager writing a feature specification for an engineering team.
 
-Create a comprehensive feature spec with:
-1. Overview (what it is, why it matters)
-2. User stories (who, what, why format)
-3. Acceptance criteria (clear, testable conditions)
-4. Customer evidence (quotes and data supporting this)
-5. Success metrics (how we'll measure success)
-6. Dependencies and considerations
+Given the feature opportunity and its impact assessment, create a comprehensive, actionable spec. The spec should be detailed enough for engineers to start implementation and for stakeholders to evaluate the investment.
 
-Format as JSON:
-{
-  "overview": {
+Write 3-5 user stories in standard format. Write acceptance criteria that are specific and testable (Given/When/Then). Ground everything in the customer evidence provided.
+
+Return ONLY valid JSON (no markdown fences, no commentary):
+{{
+  "overview": {{
     "title": "Feature name",
-    "problem_statement": "What problem this solves",
-    "solution_summary": "How this solves it"
-  },
+    "problem_statement": "The specific problem this solves and who it affects",
+    "solution_summary": "How this feature solves the problem"
+  }},
   "user_stories": [
-    "As a [user], I want [goal] so that [benefit]"
+    "As a [specific user role], I want [concrete goal] so that [measurable benefit]"
   ],
   "acceptance_criteria": [
-    "Given [context], when [action], then [outcome]"
+    "Given [specific context], when [user action], then [observable outcome]"
   ],
-  "customer_evidence": {
-    "quotes": ["quote1", "quote2"],
-    "data_points": ["data1", "data2"]
-  },
+  "customer_evidence": {{
+    "quotes": ["direct customer quote 1", "direct customer quote 2"],
+    "data_points": ["supporting metric or data signal 1", "data signal 2"]
+  }},
   "success_metrics": [
-    {"metric": "name", "target": "value", "timeframe": "period"}
+    {{"metric": "metric name", "target": "specific target value", "timeframe": "measurement period"}}
   ],
-  "dependencies": ["dep1", "dep2"],
-  "considerations": ["consideration1", "consideration2"]
-}"""),
+  "dependencies": ["dependency 1", "dependency 2"],
+  "considerations": ["edge case or risk 1", "consideration 2"]
+}}"""),
             ("user", "Feature:\n{feature}\n\nImpact Assessment:\n{impact}")
         ])
 

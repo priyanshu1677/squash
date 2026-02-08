@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import Dict, Any
 
-from langchain_anthropic import ChatAnthropic
-from langchain.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 
 from ..mcp.server_manager import MCPServerManager
 from ..tools.analytics import MixpanelTool, PostHogTool
@@ -26,10 +26,9 @@ class PMAgentNodes:
     """Collection of nodes for the PM Agent workflow."""
 
     def __init__(self):
-        self.llm = ChatAnthropic(
-            model="claude-3-5-sonnet-20241022",
-            api_key=config.anthropic_api_key,
-            temperature=0.3,
+        self.llm = ChatOpenAI(
+            model="o3-mini",
+            api_key=config.openai_api_key,
         )
         self.mcp_manager = MCPServerManager()
         self.interview_processor = InterviewProcessor()
@@ -91,48 +90,60 @@ class PMAgentNodes:
                 interview_data = self.interview_processor.aggregate_interviews(interviews)
                 state["interview_data"] = interview_data
 
-            # Collect from analytics tools
+            # Collect from analytics tools (skip mock servers)
             analytics_data = []
             for tool_name in ["mixpanel", "posthog"]:
                 client = self.mcp_manager.get_server(tool_name)
-                if client:
+                if client and not client.use_mock:
                     if tool_name == "mixpanel":
                         tool = MixpanelTool(client)
                     else:
                         tool = PostHogTool(client)
                     analytics_data.append(tool.get_insights())
+                    logger.info(f"Collected real data from {tool_name}")
+                elif client and client.use_mock:
+                    logger.info(f"Skipping mock server: {tool_name}")
 
             state["analytics_data"] = analytics_data
 
-            # Collect from support tools
+            # Collect from support tools (skip mock servers)
             support_data = []
             for tool_name in ["zendesk", "intercom"]:
                 client = self.mcp_manager.get_server(tool_name)
-                if client:
+                if client and not client.use_mock:
                     if tool_name == "zendesk":
                         tool = ZendeskTool(client)
                     else:
                         tool = IntercomTool(client)
                     support_data.append(tool.get_insights())
+                    logger.info(f"Collected real data from {tool_name}")
+                elif client and client.use_mock:
+                    logger.info(f"Skipping mock server: {tool_name}")
 
             state["support_data"] = support_data
 
-            # Collect from sales tools
+            # Collect from sales tools (skip mock servers)
             sales_client = self.mcp_manager.get_server("salesforce")
-            if sales_client:
+            if sales_client and not sales_client.use_mock:
                 sales_tool = SalesforceTool(sales_client)
                 state["sales_data"] = sales_tool.get_insights()
+                logger.info("Collected real data from salesforce")
+            elif sales_client and sales_client.use_mock:
+                logger.info("Skipping mock server: salesforce")
 
-            # Collect from PM tools
+            # Collect from PM tools (skip mock servers)
             pm_data = []
             for tool_name in ["jira", "confluence"]:
                 client = self.mcp_manager.get_server(tool_name)
-                if client:
+                if client and not client.use_mock:
                     if tool_name == "jira":
                         tool = JiraTool(client)
                     else:
                         tool = ConfluenceTool(client)
                     pm_data.append(tool.get_insights())
+                    logger.info(f"Collected real data from {tool_name}")
+                elif client and client.use_mock:
+                    logger.info(f"Skipping mock server: {tool_name}")
 
             state["pm_data"] = pm_data
 

@@ -1,6 +1,7 @@
 """Agent state schema for LangGraph."""
 
-from typing import TypedDict, List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional
+from typing_extensions import TypedDict
 
 
 class AgentState(TypedDict):

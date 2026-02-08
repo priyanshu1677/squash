@@ -1,5 +1,6 @@
 """MCP server connection manager."""
 
+import atexit
 from typing import Any, Dict, List, Optional
 
 from ..utils.config import load_config
@@ -26,6 +27,7 @@ class MCPServerManager:
         self.config = load_config(config_path)
         self.servers: Dict[str, MCPClient] = {}
         self._initialize_servers()
+        atexit.register(self.shutdown)
 
     def _initialize_servers(self) -> None:
         """Initialize all configured MCP servers."""
@@ -163,3 +165,14 @@ class MCPServerManager:
             results[server.server_name] = server_data
 
         return results
+
+    def shutdown(self) -> None:
+        """Disconnect all MCP server clients and clean up subprocesses."""
+        logger.info("Shutting down MCP server manager...")
+        for name, client in self.servers.items():
+            try:
+                client.disconnect()
+                logger.info(f"Disconnected MCP server: {name}")
+            except Exception as e:
+                logger.warning(f"Error disconnecting {name}: {e}")
+        self.servers.clear()

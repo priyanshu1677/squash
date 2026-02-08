@@ -3,8 +3,8 @@
 import json
 from typing import Dict, Any, List
 
-from langchain_anthropic import ChatAnthropic
-from langchain.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 
 from ..utils.config import config
 from ..utils.logger import get_logger
@@ -16,15 +16,14 @@ class FeatureAnalyzer:
     """
     Analyze data to identify feature opportunities.
 
-    Uses Claude to analyze aggregated data and suggest features
+    Uses LLM to analyze aggregated data and suggest features
     based on customer feedback, usage patterns, and business goals.
     """
 
     def __init__(self):
-        self.llm = ChatAnthropic(
-            model="claude-3-5-sonnet-20241022",
-            api_key=config.anthropic_api_key,
-            temperature=0.7,
+        self.llm = ChatOpenAI(
+            model="o3-mini",
+            api_key=config.openai_api_key,
         )
 
     def analyze(self, aggregated_data: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -40,30 +39,33 @@ class FeatureAnalyzer:
         logger.info("Analyzing data for feature opportunities")
 
         prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are an expert product manager analyzing data to identify feature opportunities.
+            ("system", """You are a senior product manager using Squash, an AI-powered PM platform. Your job is to analyze cross-functional data and identify the highest-impact feature opportunities.
 
-Based on the provided data from analytics, support, sales, interviews, and project management tools, identify the top 5-7 feature opportunities.
+You will receive aggregated data from multiple sources:
+- Analytics (Mixpanel/PostHog): usage patterns, drop-offs, feature adoption
+- Support (Zendesk/Intercom): customer complaints, ticket themes, sentiment
+- Sales (Salesforce): win/loss reasons, prospect feedback, pipeline signals
+- Interviews: customer pain points, feature requests, direct quotes
+- PM tools (Jira/Confluence): backlog state, sprint velocity, existing requirements
 
-For each feature opportunity, provide:
-1. Feature name (short, descriptive)
-2. Description (2-3 sentences explaining what it is)
-3. Justification (why this feature, based on the data)
-4. Evidence (specific data points, customer quotes, metrics)
-5. Expected impact (how it will help users/business)
+Analyze this data to identify the top 5-7 feature opportunities. For each, reason through:
+1. What recurring signals point to this need across multiple data sources?
+2. How many users/customers would benefit and how severely are they impacted?
+3. What specific evidence supports building this?
 
-Format your response as JSON:
-{
+Return ONLY valid JSON (no markdown fences, no commentary):
+{{
   "opportunities": [
-    {
-      "name": "Feature name",
-      "description": "What it does",
-      "justification": "Why we should build this",
-      "evidence": ["data point 1", "quote 1", "metric 1"],
-      "expected_impact": "How it helps",
-      "confidence": "high/medium/low"
-    }
+    {{
+      "name": "Short feature name",
+      "description": "2-3 sentence description of the feature and what problem it solves",
+      "justification": "Why this feature matters, grounded in the data",
+      "evidence": ["specific data point or quote 1", "metric or signal 2", "customer quote 3"],
+      "expected_impact": "Concrete expected outcomes (e.g. reduce churn by X%, improve onboarding completion)",
+      "confidence": "high/medium/low based on strength and consistency of evidence"
+    }}
   ]
-}"""),
+}}"""),
             ("user", "Data to analyze:\n\n{data}")
         ])
 

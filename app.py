@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Web UI server for PM Agentic AI Platform."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from src.web.routes import router
@@ -14,11 +16,33 @@ from src.utils.logger import setup_logging, get_logger
 setup_logging(level=config.log_level)
 logger = get_logger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup / shutdown lifecycle for the FastAPI application."""
+    yield
+    # Shutdown: disconnect all MCP server subprocesses
+    from src.mcp.server_manager import MCPServerManager
+    # The manager is typically instantiated as a module-level singleton
+    # elsewhere; iterate the class instances if accessible, or rely on
+    # atexit which is registered in __init__.
+    logger.info("Application shutdown – MCP cleanup handled by atexit")
+
+
 # Create FastAPI app
 app = FastAPI(
     title="PM Agentic AI Platform",
     description="Product management with AI agents",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+# CORS — allow frontend direct calls (bypasses Next.js proxy for long requests)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include API routes

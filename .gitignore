@@ -47,6 +47,11 @@ data/cache/*
 *.log
 logs/
 
+# Node / Frontend
+node_modules/
+.next/
+*.tsbuildinfo
+
 # OS
 .DS_Store
 Thumbs.db

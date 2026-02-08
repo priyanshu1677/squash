@@ -3,8 +3,8 @@
 import re
 from typing import Dict, Any, List
 
-from langchain_anthropic import ChatAnthropic
-from langchain.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 
 from ..utils.config import config
 from ..utils.logger import get_logger
@@ -16,7 +16,7 @@ class InterviewProcessor:
     """
     Process customer interview data to extract insights.
 
-    Uses Claude to analyze interview text and extract:
+    Uses LLM to analyze interview text and extract:
     - Key pain points
     - Feature requests
     - Customer sentiment
@@ -24,10 +24,9 @@ class InterviewProcessor:
     """
 
     def __init__(self):
-        self.llm = ChatAnthropic(
-            model="claude-3-5-sonnet-20241022",
-            api_key=config.anthropic_api_key,
-            temperature=0.3,
+        self.llm = ChatOpenAI(
+            model="o3-mini",
+            api_key=config.openai_api_key,
         )
 
     def process_interview(self, document_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -55,7 +54,7 @@ class InterviewProcessor:
 
         logger.info(f"Processing interview: {document_data.get('file_name')}")
 
-        # Extract insights using Claude
+        # Extract insights using LLM
         insights = self._extract_insights(text)
 
         return {
@@ -67,7 +66,7 @@ class InterviewProcessor:
 
     def _extract_insights(self, text: str) -> Dict[str, Any]:
         """
-        Extract insights from interview text using Claude.
+        Extract insights from interview text using LLM.
 
         Args:
             text: Interview text
@@ -76,21 +75,23 @@ class InterviewProcessor:
             Extracted insights
         """
         prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are an expert product manager analyzing customer interviews.
-Extract the following from the interview:
-1. Pain points (specific problems customers face)
-2. Feature requests (what they want to see)
-3. Positive feedback (what they like)
-4. Overall sentiment (positive, neutral, negative)
-5. Key quotes (exact quotes that are insightful)
+            ("system", """You are a product researcher extracting structured insights from a customer interview transcript.
 
-Format your response as JSON with these exact keys:
+Carefully read the interview and extract:
+1. Pain points — specific, concrete problems the customer described (not vague summaries)
+2. Feature requests — things the customer explicitly asked for or wished existed
+3. Positive feedback — what the customer likes about the current product
+4. Sentiment — overall tone: positive, neutral, or negative
+5. Key quotes — verbatim quotes that best capture the customer's voice (use their exact words)
+6. Summary — 2-3 sentence synthesis of the interview's main takeaway
+
+Return ONLY valid JSON (no markdown fences, no commentary):
 {
-  "pain_points": ["point 1", "point 2", ...],
-  "feature_requests": ["request 1", "request 2", ...],
-  "positive_feedback": ["feedback 1", "feedback 2", ...],
+  "pain_points": ["specific pain point 1", "specific pain point 2"],
+  "feature_requests": ["request 1", "request 2"],
+  "positive_feedback": ["feedback 1", "feedback 2"],
   "sentiment": "positive/neutral/negative",
-  "key_quotes": ["quote 1", "quote 2", ...],
+  "key_quotes": ["exact quote 1", "exact quote 2"],
   "summary": "Brief 2-3 sentence summary"
 }"""),
             ("user", "Interview text:\n\n{text}")

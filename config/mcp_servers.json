@@ -4,19 +4,51 @@
       "type": "analytics",
       "name": "Mixpanel",
       "description": "Product analytics and user behavior tracking",
-      "mock": true,
+      "mock": false,
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.mixpanel.com/mcp", "--allow-http"],
+      "env": {},
+      "capability_map": {
+        "query_events": "run_segmentation_query",
+        "get_user_metrics": "run_segmentation_query",
+        "get_funnel_data": "run_funnels_query",
+        "get_retention_data": "run_retention_query",
+        "get_events": "get_events",
+        "get_projects": "get_projects",
+        "run_frequency_query": "run_frequency_query",
+        "get_property_names": "get_property_names",
+        "get_property_values": "get_property_values",
+        "get_issues": "get_issues"
+      },
       "capabilities": [
         "query_events",
         "get_user_metrics",
         "get_funnel_data",
-        "get_retention_data"
+        "get_retention_data",
+        "get_events",
+        "get_projects",
+        "run_frequency_query",
+        "get_property_names",
+        "get_property_values",
+        "get_issues"
       ]
     },
     "posthog": {
       "type": "analytics",
       "name": "PostHog",
       "description": "Product analytics and feature flags",
-      "mock": true,
+      "mock": false,
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.posthog.com/mcp", "--allow-http"],
+      "env": {
+        "POSTHOG_AUTH_HEADER": "Bearer ${POSTHOG_API_KEY}"
+      },
+      "capability_map": {
+        "query_events": "query_events",
+        "get_feature_flags": "get_feature_flags",
+        "get_session_recordings": "get_session_recordings",
+        "get_user_cohorts": "get_user_cohorts"
+      },
       "capabilities": [
         "query_events",
         "get_feature_flags",
@@ -52,7 +84,16 @@
       "type": "sales",
       "name": "Salesforce",
       "description": "CRM and sales management",
-      "mock": true,
+      "mock": false,
+      "command": "npx",
+      "args": ["-y", "@salesforce/mcp", "--orgs", "DEFAULT_TARGET_ORG"],
+      "env": {},
+      "capability_map": {
+        "get_opportunities": "query",
+        "get_accounts": "query",
+        "get_win_loss_reasons": "query",
+        "get_customer_feedback": "query"
+      },
       "capabilities": [
         "get_opportunities",
         "get_accounts",
@@ -64,7 +105,20 @@
       "type": "project_management",
       "name": "Jira",
       "description": "Project and issue tracking",
-      "mock": true,
+      "mock": false,
+      "command": "uvx",
+      "args": ["mcp-atlassian", "--jira-url", "${JIRA_URL}", "--jira-username", "${JIRA_EMAIL}", "--jira-token", "${JIRA_API_TOKEN}"],
+      "env": {
+        "JIRA_URL": "${JIRA_URL}",
+        "JIRA_USERNAME": "${JIRA_EMAIL}",
+        "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
+      },
+      "capability_map": {
+        "get_issues": "jira_search",
+        "get_sprint_data": "jira_get_board_sprints",
+        "get_backlog": "jira_search",
+        "get_velocity": "jira_get_board_sprints"
+      },
       "capabilities": [
         "get_issues",
         "get_sprint_data",
@@ -76,7 +130,20 @@
       "type": "project_management",
       "name": "Confluence",
       "description": "Documentation and knowledge management",
-      "mock": true,
+      "mock": false,
+      "command": "uvx",
+      "args": ["mcp-atlassian", "--confluence-url", "${CONFLUENCE_URL}", "--confluence-username", "${CONFLUENCE_EMAIL}", "--confluence-token", "${CONFLUENCE_API_TOKEN}"],
+      "env": {
+        "CONFLUENCE_URL": "${CONFLUENCE_URL}",
+        "CONFLUENCE_USERNAME": "${CONFLUENCE_EMAIL}",
+        "CONFLUENCE_API_TOKEN": "${CONFLUENCE_API_TOKEN}"
+      },
+      "capability_map": {
+        "search_pages": "confluence_search",
+        "get_product_docs": "confluence_search",
+        "get_requirements": "confluence_search",
+        "get_user_stories": "confluence_search"
+      },
       "capabilities": [
         "search_pages",
         "get_product_docs",

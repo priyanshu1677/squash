@@ -3,8 +3,8 @@
 import json
 from typing import Dict, Any, List
 
-from langchain_anthropic import ChatAnthropic
-from langchain.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 
 from ..utils.config import config
 from ..utils.logger import get_logger
@@ -21,10 +21,9 @@ class TaskBreakdownGenerator:
     """
 
     def __init__(self):
-        self.llm = ChatAnthropic(
-            model="claude-3-5-sonnet-20241022",
-            api_key=config.anthropic_api_key,
-            temperature=0.4,
+        self.llm = ChatOpenAI(
+            model="o3-mini",
+            api_key=config.openai_api_key,
         )
 
     def generate_tasks(
@@ -45,44 +44,40 @@ class TaskBreakdownGenerator:
         logger.info("Generating task breakdown")
 
         prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are a tech lead breaking down a feature into development tasks.
+            ("system", """You are a tech lead breaking down a feature into development tasks that can be directly added to a sprint board.
 
-Create a comprehensive task breakdown with:
-1. Backend tasks (API, database, logic)
-2. Frontend tasks (UI components, pages)
-3. Testing tasks (unit, integration, E2E)
-4. DevOps tasks (deployment, monitoring)
+Given the feature spec and UI proposals, create a complete task breakdown covering:
+1. Backend tasks — API endpoints, database migrations, business logic, integrations
+2. Frontend tasks — UI components, pages, state management, API integration
+3. Testing tasks — unit tests, integration tests, E2E tests
+4. DevOps tasks — deployment, monitoring, feature flags
 
-For each task:
-- Clear, actionable description
-- Estimated effort (hours or story points)
-- Dependencies (what must be done first)
-- Priority (high/medium/low)
+Each task should be small enough to complete in 1-3 days. Include clear dependency chains so the team knows the critical path.
 
-Format as JSON:
-{
+Return ONLY valid JSON (no markdown fences, no commentary):
+{{
   "epic_name": "Feature name",
-  "total_estimated_effort": "X hours or Y points",
+  "total_estimated_effort": "X hours or Y story points",
   "tasks": [
-    {
+    {{
       "id": "TASK-1",
       "category": "backend/frontend/testing/devops",
-      "title": "Task title",
-      "description": "Detailed description",
+      "title": "Concise, actionable task title",
+      "description": "What to implement, key technical decisions, and any gotchas",
       "estimated_effort": "X hours",
       "priority": "high/medium/low",
-      "dependencies": ["TASK-0"],
-      "acceptance_criteria": ["criteria1", "criteria2"]
-    }
+      "dependencies": [],
+      "acceptance_criteria": ["testable criterion 1", "testable criterion 2"]
+    }}
   ],
   "milestones": [
-    {
+    {{
       "name": "Milestone name",
       "tasks": ["TASK-1", "TASK-2"],
-      "description": "What's achieved"
-    }
+      "description": "What's shippable at this point"
+    }}
   ]
-}"""),
+}}"""),
             ("user", "Feature Spec:\n{spec}\n\nUI Proposals:\n{ui}")
         ])
 
