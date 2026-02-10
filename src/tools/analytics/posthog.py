@@ -19,6 +19,7 @@ class PostHogTool(BaseTool):
             "source": "posthog",
             "events": self.get_events(),
             "feature_flags": self.get_feature_flags(),
+            "errors": self.get_errors(),
         }
         return insights
 
@@ -29,3 +30,7 @@ class PostHogTool(BaseTool):
     def get_feature_flags(self) -> Dict[str, Any]:
         """Get feature flag data."""
         return self.call_capability("get_feature_flags")
+
+    def get_errors(self) -> Dict[str, Any]:
+        """Get error tracking data."""
+        return self.call_capability("get_errors")

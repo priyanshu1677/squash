@@ -44,16 +44,20 @@
         "POSTHOG_AUTH_HEADER": "Bearer ${POSTHOG_API_KEY}"
       },
       "capability_map": {
-        "query_events": "query_events",
-        "get_feature_flags": "get_feature_flags",
-        "get_session_recordings": "get_session_recordings",
-        "get_user_cohorts": "get_user_cohorts"
+        "query_events": "insight-query",
+        "get_feature_flags": "feature-flag-get-all",
+        "get_insights": "insights-get-all",
+        "get_errors": "list-errors",
+        "get_dashboards": "dashboards-get-all",
+        "get_experiments": "experiment-get-all"
       },
       "capabilities": [
         "query_events",
         "get_feature_flags",
-        "get_session_recordings",
-        "get_user_cohorts"
+        "get_insights",
+        "get_errors",
+        "get_dashboards",
+        "get_experiments"
       ]
     },
     "zendesk": {
@@ -86,13 +90,13 @@
       "description": "CRM and sales management",
       "mock": false,
       "command": "npx",
-      "args": ["-y", "@salesforce/mcp", "--orgs", "DEFAULT_TARGET_ORG"],
+      "args": ["-y", "@salesforce/mcp", "--toolsets", "all", "--orgs", "rithenofficial01-p4d0@force.com"],
       "env": {},
       "capability_map": {
-        "get_opportunities": "query",
-        "get_accounts": "query",
-        "get_win_loss_reasons": "query",
-        "get_customer_feedback": "query"
+        "get_opportunities": "run_soql_query",
+        "get_accounts": "run_soql_query",
+        "get_win_loss_reasons": "run_soql_query",
+        "get_customer_feedback": "run_soql_query"
       },
       "capabilities": [
         "get_opportunities",
